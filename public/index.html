@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Node CRUD with MySQL</title>
+    <style>
+        body {
+            font-family: Arial;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        input,
+        button {
+            margin: 5px 0;
+            padding: 6px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>User List</h1>
+    <form id="userForm">
+        <input type="hidden" id="userId">
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="number" id="age" placeholder="Age" required>
+        <button type="submit">Save</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="userTable"></tbody>
+    </table>
+
+    <script>
+        const form = document.getElementById('userForm');
+        const nameInput = document.getElementById('name');
+        const ageInput = document.getElementById('age');
+        const userIdInput = document.getElementById('userId');
+        const tableBody = document.getElementById('userTable');
+
+        const apiUrl = '/users';
+
+        function loadUsers() {
+            fetch(apiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    tableBody.innerHTML = '';
+                    data.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+              <td>${user.id}</td>
+              <td>${user.name}</td>
+              <td>${user.age}</td>
+              <td>
+                <button onclick="editUser(${user.id}, '${user.name}', ${user.age})">Edit</button>
+                <button onclick="deleteUser(${user.id})">Delete</button>
+              </td>
+            `;
+                        tableBody.appendChild(row);
+                    });
+                });
+        }
+
+        function editUser(id, name, age) {
+            userIdInput.value = id;
+            nameInput.value = name;
+            ageInput.value = age;
+        }
+
+        function deleteUser(id) {
+            if (confirm("Are you sure you want to delete?")) {
+                fetch(`${apiUrl}/${id}`, { method: 'DELETE' })
+                    .then(() => loadUsers());
+            }
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = userIdInput.value;
+            const name = nameInput.value;
+            const age = parseInt(ageInput.value);
+
+            const method = id ? 'PUT' : 'POST';
+            const url = id ? `${apiUrl}/${id}` : apiUrl;
+
+            fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, age })
+            })
+                .then(() => {
+                    form.reset();
+                    loadUsers();
+                });
+        });
+
+        loadUsers();
+    </script>
+</body>
+
+</html>
